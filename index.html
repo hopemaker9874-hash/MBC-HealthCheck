@@ -1,88 +1,109 @@
 <!DOCTYPE html>
+<!--
+====================================================
+Coaching Dashboard
+Version: 1.0.2
+Environment: Production (GitHub Pages Ready)
+Update:
+- Remove body summary from Tab 1
+- Add full body composition in Summary
+- Professional validation
+- Clean structure
+====================================================
+-->
+
 <html lang="th">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Coaching Dashboard - Stable</title>
+<title>Coaching Dashboard v1.0.2</title>
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 
 <body class="bg-gradient-to-br from-emerald-50 to-green-100 min-h-screen p-6">
 
-<div class="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl p-8">
+<div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl p-8">
 
 <h1 class="text-3xl font-bold text-center text-emerald-700 mb-6">
-Coaching Dashboard (Stable Architecture)
+Coaching Dashboard
 </h1>
 
 <div class="flex justify-center space-x-4 mb-8">
-<button onclick="showTab(1)" class="bg-emerald-600 text-white px-4 py-2 rounded-xl">Body</button>
-<button onclick="showTab(2)" class="bg-gray-300 px-4 py-2 rounded-xl">Risk</button>
-<button onclick="showTab(3)" class="bg-gray-300 px-4 py-2 rounded-xl">Summary</button>
+<button onclick="showTab(1)" class="tab-btn">Body</button>
+<button onclick="showTab(2)" class="tab-btn">Risk</button>
+<button onclick="showTab(3)" class="tab-btn">Summary</button>
 </div>
 
 <!-- ================= BODY ================= -->
 
 <div id="tab1">
+
+<input id="clientNameInput" type="text" placeholder="ชื่อผู้รับการประเมิน" class="input">
 <input id="weightInput" type="number" placeholder="น้ำหนัก (kg)" class="input">
 <input id="heightInput" type="number" placeholder="ส่วนสูง (cm)" class="input">
 <input id="ageInput" type="number" placeholder="อายุ" class="input">
 <input id="bodyfatInput" type="number" placeholder="%ไขมัน" class="input">
-<input id="muscleInput" type="number" placeholder="SMM (kg)" class="input">
+<input id="muscleInput" type="number" placeholder="มวลกล้ามเนื้อ (kg)" class="input">
 
 <select id="genderInput" class="input">
+<option value="">เลือกเพศ</option>
 <option value="female">หญิง</option>
 <option value="male">ชาย</option>
 </select>
 
-<select id="activityLevel" class="input">
-<option value="1.2">ไม่ออกกำลังกาย</option>
-<option value="1.375">ออกกำลังเบา</option>
-<option value="1.55">ปานกลาง</option>
-<option value="1.725">หนัก</option>
-<option value="1.9">นักกีฬา</option>
-</select>
-
-<button onclick="analyzeBody()" class="bg-emerald-600 text-white w-full py-2 rounded-xl mt-2">
-วิเคราะห์
+<button onclick="analyzeBody()" class="primary-btn">
+บันทึกข้อมูล
 </button>
 
-<div id="bodyResult" class="mt-4 p-4 bg-emerald-50 rounded-xl text-sm"></div>
+<div id="bodyResult" class="mt-4 text-green-700 text-sm"></div>
+
 </div>
 
 <!-- ================= RISK ================= -->
 
 <div id="tab2" class="hidden">
 <div id="riskContainer"></div>
-<button onclick="calculateRisk()" class="bg-orange-500 text-white w-full py-2 rounded-xl mt-4">
+<button onclick="calculateRisk()" class="secondary-btn">
 ประเมินผล
 </button>
-<div id="riskResult" class="mt-4 p-4 bg-orange-50 rounded-xl text-sm"></div>
+<div id="riskResult" class="mt-4 text-green-700 text-sm"></div>
 </div>
 
 <!-- ================= SUMMARY ================= -->
 
 <div id="tab3" class="hidden">
-<div id="summarySection" class="p-4 bg-green-50 rounded-xl text-sm"></div>
-<canvas id="radarChart" class="mt-6"></canvas>
+<div id="summarySection" class="mt-4 p-4 bg-emerald-50 rounded-xl text-sm"></div>
 </div>
 
 </div>
 
 <script>
 
-/* ================= GLOBAL ================= */
+/* =====================================================
+   GLOBAL STATE
+===================================================== */
 
-let globalData = {
-body: null,
-risk: null
-};
+const APP_VERSION="1.0.2";
+let globalData={body:null,risk:null};
 
-/* ================= UI ================= */
+/* =====================================================
+   UI STYLING
+===================================================== */
 
 document.querySelectorAll(".input").forEach(i=>{
 i.classList.add("w-full","p-2","border","rounded-xl","mb-2");
+});
+
+document.querySelectorAll(".tab-btn").forEach(btn=>{
+btn.classList.add("px-4","py-2","rounded-xl","bg-gray-300");
+});
+
+document.querySelectorAll(".primary-btn").forEach(btn=>{
+btn.classList.add("bg-emerald-600","text-white","w-full","py-2","rounded-xl","mt-2");
+});
+
+document.querySelectorAll(".secondary-btn").forEach(btn=>{
+btn.classList.add("bg-orange-500","text-white","w-full","py-2","rounded-xl","mt-4");
 });
 
 function showTab(n){
@@ -93,147 +114,86 @@ document.getElementById("tab"+n).classList.remove("hidden");
 if(n===3) generateSummary();
 }
 
-/* ================= BODY ================= */
+/* =====================================================
+   VALIDATION
+===================================================== */
+
+function isValidNumber(v,min,max){
+if(v===""||isNaN(v)||v<min||v>max) return false;
+return true;
+}
+
+/* =====================================================
+   BODY ANALYSIS
+===================================================== */
 
 function analyzeBody(){
 
-let w=+weightInput.value;
-let h=+heightInput.value;
-let a=+ageInput.value;
-let bf=+bodyfatInput.value;
-let m=+muscleInput.value;
+let w=parseFloat(weightInput.value);
+let h=parseFloat(heightInput.value);
+let a=parseInt(ageInput.value);
+let bf=parseFloat(bodyfatInput.value);
+let m=parseFloat(muscleInput.value);
 let g=genderInput.value;
-let act=+activityLevel.value;
 
-if(!w||!h||!a||!bf||!m){
-alert("กรอกข้อมูลให้ครบครับ");
-return;
-}
+if(!isValidNumber(w,30,250)) return alert("น้ำหนักไม่ถูกต้อง (30-250 kg)");
+if(!isValidNumber(h,120,220)) return alert("ส่วนสูงไม่ถูกต้อง (120-220 cm)");
+if(!isValidNumber(a,10,100)) return alert("อายุไม่ถูกต้อง (10-100 ปี)");
+if(!isValidNumber(bf,3,60)) return alert("%ไขมันไม่ถูกต้อง (3-60%)");
+if(!isValidNumber(m,5,80)) return alert("มวลกล้ามเนื้อไม่ถูกต้อง");
+if(!g) return alert("กรุณาเลือกเพศ");
 
 let H=h/100;
-
-/* ช่วงน้ำหนัก BMI 18.5-22.9 */
 let weightMin=18.5*H*H;
 let weightMax=22.9*H*H;
 
-/* ไขมัน */
-let fatPercentMin=(g==="male")?10:18;
-let fatPercentMax=(g==="male")?20:28;
-
-let fatKgMin=weightMin*(fatPercentMin/100);
-let fatKgMax=weightMax*(fatPercentMax/100);
-
-let currentFat=w*(bf/100);
-
-/* กล้าม */
 let stdWeight=(g==="male")?H*H*22:H*H*21;
 let muscleMin=(g==="male")?stdWeight*0.42:stdWeight*0.35;
 let muscleMax=(g==="male")?stdWeight*0.48:stdWeight*0.40;
 
-/* สรุป */
-let fatAdvice = currentFat>fatKgMax
+let fatPercentMax=(g==="male")?20:28;
+let fatKgMax=w*(fatPercentMax/100);
+let currentFat=w*(bf/100);
+
+let fatAdvice=currentFat>fatKgMax
 ? "ควรลดไขมันประมาณ "+(currentFat-fatKgMax).toFixed(1)+" กก."
 : "ไขมันอยู่ในช่วงมาตรฐาน";
 
-let muscleAdvice = m<muscleMin
+let muscleAdvice=m<muscleMin
 ? "ควรเพิ่มกล้ามเนื้ออย่างน้อย "+(muscleMin-m).toFixed(1)+" กก."
 : "กล้ามเนื้ออยู่ในช่วงมาตรฐาน";
 
-let BMR=(g==="male")
-? (10*w+6.25*h-5*a+5)
-: (10*w+6.25*h-5*a-161);
-
-let TDEE=BMR*act;
-
 globalData.body={
-fatAdvice,muscleAdvice,BMR,TDEE
+w,h,a,bf,m,g,
+weightMin,weightMax,
+muscleMin,muscleMax,
+fatAdvice,muscleAdvice
 };
 
-bodyResult.innerHTML=`
-<h3 class="font-bold">ช่วงมาตรฐาน</h3>
-น้ำหนัก: ${weightMin.toFixed(1)} - ${weightMax.toFixed(1)} kg<br>
-ไขมัน (%): ${fatPercentMin} - ${fatPercentMax}%<br>
-ไขมัน (kg): ${fatKgMin.toFixed(1)} - ${fatKgMax.toFixed(1)} kg<br>
-กล้ามเนื้อ: ${muscleMin.toFixed(1)} - ${muscleMax.toFixed(1)} kg<br><br>
-
-<h3 class="font-bold">การประเมิน</h3>
-${fatAdvice}<br>
-${muscleAdvice}<br><br>
-
-BMR: ${BMR.toFixed(0)} kcal<br>
-TDEE: ${TDEE.toFixed(0)} kcal
-`;
+bodyResult.innerHTML="✅ บันทึกข้อมูลเรียบร้อยแล้ว";
 }
 
-/* ================= RISK (LOCKED STRUCTURE) ================= */
+/* =====================================================
+   RISK SECTION
+===================================================== */
 
-const riskData = [
-{
-title:"Nutrition",
-questions:[
-"คุณสามารถหลีกเลี่ยงอาหารแปรรูป ข้าวขาว ผลไม้รสหวาน ได้เพียงใด?",
-"คุณจัดจานอาหาร 2:1:1 ได้เพียงใด?",
-"คุณได้รับโปรตีนเพียงพอทุกวันได้เพียงใด?"
-]
-},
-{
-title:"Activity",
-questions:[
-"คุณออกกำลังกาย ≥150 นาที/สัปดาห์ ได้เพียงใด?",
-"คุณทำเวท ≥2 ครั้ง/สัปดาห์ ได้เพียงใด?",
-"คุณลุกขยับทุก 1 ชั่วโมงได้เพียงใด?"
-]
-},
-{
-title:"Sleep",
-questions:[
-"คุณนอน 7–9 ชั่วโมงได้เพียงใด?",
-"คุณตื่นแล้วสดชื่นได้เพียงใด?",
-"คุณเข้านอนตรงเวลาได้เพียงใด?"
-]
-},
-{
-title:"Stress",
-questions:[
-"คุณจัดการความเครียดได้เพียงใด?",
-"คุณหลีกเลี่ยง Emotional Eating ได้เพียงใด?",
-"คุณผ่อนคลายจิตใจทุกวันได้เพียงใด?"
-]
-},
-{
-title:"Mindset",
-questions:[
-"คุณโฟกัสองค์ประกอบร่างกายมากกว่าน้ำหนักได้เพียงใด?",
-"คุณเชื่อในแนวทางระยะยาวได้เพียงใด?",
-"คุณกลับเข้าสู่แผนได้ทันทีเมื่อหลุดได้เพียงใด?"
-]
-},
-{
-title:"Water",
-questions:[
-"คุณดื่มน้ำ ≥1.5 ลิตร/วัน ได้เพียงใด?",
-"คุณจำกัดเครื่องดื่มหวานได้เพียงใด?",
-"คุณพกแก้วน้ำหรือขวดน้ำติดตัวระหว่างวันได้เพียงใด?"
-]
-},
-{
-title:"Microbiome",
-questions:[
-"คุณทานผักครบ 5 สี ได้เพียงใด?",
-"คุณขับถ่ายปกติได้เพียงใด?",
-"คุณกินโพรไบโอติคส์ หรือ อาหารที่มีโพรไบโอติคส์ได้เพียงใด?"
-]
-}
+const riskData=[
+{title:"Nutrition",questions:["หลีกเลี่ยงอาหารแปรรูปได้เพียงใด?","จัดจาน 2:1:1 ได้เพียงใด?","ได้รับโปรตีนเพียงพอได้เพียงใด?"]},
+{title:"Activity",questions:["ออกกำลังกาย ≥150 นาที?","ทำเวท ≥2 ครั้ง?","ลุกขยับทุก 1 ชม.?"]},
+{title:"Sleep",questions:["นอน 7–9 ชม.?","ตื่นสดชื่น?","เข้านอนตรงเวลา?"]},
+{title:"Stress",questions:["จัดการความเครียดได้?","หลีกเลี่ยงกินตามอารมณ์?","ผ่อนคลายทุกวัน?"]},
+{title:"Mindset",questions:["โฟกัสองค์ประกอบร่างกาย?","เชื่อในระยะยาว?","กลับเข้าแผนได้ทันที?"]},
+{title:"Water",questions:["ดื่มน้ำ ≥1.5 ลิตร?","จำกัดหวาน?","พกขวดน้ำ?"]},
+{title:"Microbiome",questions:["ทานผักหลากสี?","ขับถ่ายปกติ?","ดูแลลำไส้?"]}
 ];
 
 function initRisk(){
 let html="";
 riskData.forEach((factor,i)=>{
-html+=`<div class="mt-4">
-<h3 class="font-bold mb-2">${factor.title}</h3>`;
+html+=`<div class="mt-4"><h3 class="font-bold">${factor.title}</h3>`;
 factor.questions.forEach((q,j)=>{
 html+=`
-<label class="block mb-1">${j+1}. ${q}</label>
+<label>${j+1}. ${q}</label>
 <select class="risk input" data-factor="${i}">
 <option value="0">นานๆ ครั้ง</option>
 <option value="1">บ่อยเป็นบางช่วง</option>
@@ -244,21 +204,20 @@ html+="</div>";
 });
 riskContainer.innerHTML=html;
 }
-
 window.onload=initRisk;
 
 function calculateRisk(){
 let scores=new Array(riskData.length).fill(0);
 document.querySelectorAll(".risk").forEach(s=>{
-scores[s.dataset.factor]+=+s.value;
+scores[s.dataset.factor]+=parseInt(s.value);
 });
 globalData.risk=scores;
-riskResult.innerHTML="ประเมินเรียบร้อยแล้ว";
+riskResult.innerHTML="✅ บันทึกคะแนนเรียบร้อยแล้ว";
 }
 
-/* ================= SUMMARY ================= */
-
-let radarChart=null;
+/* =====================================================
+   SUMMARY
+===================================================== */
 
 function generateSummary(){
 
@@ -267,31 +226,45 @@ summarySection.innerHTML="กรุณาประเมินให้ครบ
 return;
 }
 
-let avg=(globalData.risk.reduce((a,b)=>a+b,0)/riskData.length).toFixed(1);
+let d=globalData.body;
+let name=clientNameInput.value||"ไม่ระบุชื่อ";
+let dateString=new Date().toLocaleDateString("th-TH");
 
-summarySection.innerHTML=`
-<h3 class="font-bold">สรุปร่างกาย</h3>
-${globalData.body.fatAdvice}<br>
-${globalData.body.muscleAdvice}<br><br>
-
-BMR: ${globalData.body.BMR.toFixed(0)} kcal<br>
-TDEE: ${globalData.body.TDEE.toFixed(0)} kcal<br><br>
-
-คะแนนเฉลี่ยพฤติกรรม: ${avg}/6
-`;
-
-if(radarChart) radarChart.destroy();
-
-radarChart=new Chart(document.getElementById('radarChart'),{
-type:'radar',
-data:{
-labels:riskData.map(r=>r.title),
-datasets:[{
-label:'Risk Score',
-data:globalData.risk
-}]
-}
+let factorList="";
+globalData.risk.forEach((score,i)=>{
+factorList+=`${riskData[i].title}: ${score}/6<br>`;
 });
+
+summarySection.innerHTML=
+`
+<div class="bg-white p-5 rounded-xl shadow">
+
+<h2 class="text-lg font-bold mb-3">รายงานผลการประเมินสุขภาพ</h2>
+
+ชื่อ: ${name}<br>
+วันที่: ${dateString}<br><br>
+
+<h3 class="font-bold">ข้อมูลองค์ประกอบร่างกาย</h3>
+น้ำหนัก: ${d.w} kg<br>
+ส่วนสูง: ${d.h} cm<br>
+อายุ: ${d.a} ปี<br>
+เพศ: ${d.g==="male"?"ชาย":"หญิง"}<br>
+%ไขมัน: ${d.bf}%<br>
+มวลกล้ามเนื้อ: ${d.m} kg<br><br>
+
+<h3 class="font-bold">ค่ามาตรฐานที่แนะนำ</h3>
+ช่วงน้ำหนักที่เหมาะสม: ${d.weightMin.toFixed(1)} - ${d.weightMax.toFixed(1)} kg<br>
+ช่วงมวลกล้ามเนื้อมาตรฐาน: ${d.muscleMin.toFixed(1)} - ${d.muscleMax.toFixed(1)} kg<br><br>
+
+<h3 class="font-bold">สรุปการประเมินร่างกาย</h3>
+${d.fatAdvice}<br>
+${d.muscleAdvice}<br><br>
+
+<h3 class="font-bold">คะแนน 7 ปัจจัยสุขภาพ</h3>
+${factorList}
+
+</div>
+`;
 }
 
 </script>
