@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coaching Dashboard - Stable</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body class="bg-gradient-to-br from-emerald-50 to-green-100 min-h-screen p-6">
+
+<div class="max-w-6xl mx-auto bg-white rounded-3xl shadow-2xl p-8">
+
+<h1 class="text-3xl font-bold text-center text-emerald-700 mb-6">
+Coaching Dashboard (Stable Architecture)
+</h1>
+
+<div class="flex justify-center space-x-4 mb-8">
+<button onclick="showTab(1)" class="bg-emerald-600 text-white px-4 py-2 rounded-xl">Body</button>
+<button onclick="showTab(2)" class="bg-gray-300 px-4 py-2 rounded-xl">Risk</button>
+<button onclick="showTab(3)" class="bg-gray-300 px-4 py-2 rounded-xl">Summary</button>
+</div>
+
+<!-- ================= BODY ================= -->
+
+<div id="tab1">
+<input id="weightInput" type="number" placeholder="น้ำหนัก (kg)" class="input">
+<input id="heightInput" type="number" placeholder="ส่วนสูง (cm)" class="input">
+<input id="ageInput" type="number" placeholder="อายุ" class="input">
+<input id="bodyfatInput" type="number" placeholder="%ไขมัน" class="input">
+<input id="muscleInput" type="number" placeholder="SMM (kg)" class="input">
+
+<select id="genderInput" class="input">
+<option value="female">หญิง</option>
+<option value="male">ชาย</option>
+</select>
+
+<select id="activityLevel" class="input">
+<option value="1.2">ไม่ออกกำลังกาย</option>
+<option value="1.375">ออกกำลังเบา</option>
+<option value="1.55">ปานกลาง</option>
+<option value="1.725">หนัก</option>
+<option value="1.9">นักกีฬา</option>
+</select>
+
+<button onclick="analyzeBody()" class="bg-emerald-600 text-white w-full py-2 rounded-xl mt-2">
+วิเคราะห์
+</button>
+
+<div id="bodyResult" class="mt-4 p-4 bg-emerald-50 rounded-xl text-sm"></div>
+</div>
+
+<!-- ================= RISK ================= -->
+
+<div id="tab2" class="hidden">
+<div id="riskContainer"></div>
+<button onclick="calculateRisk()" class="bg-orange-500 text-white w-full py-2 rounded-xl mt-4">
+ประเมินผล
+</button>
+<div id="riskResult" class="mt-4 p-4 bg-orange-50 rounded-xl text-sm"></div>
+</div>
+
+<!-- ================= SUMMARY ================= -->
+
+<div id="tab3" class="hidden">
+<div id="summarySection" class="p-4 bg-green-50 rounded-xl text-sm"></div>
+<canvas id="radarChart" class="mt-6"></canvas>
+</div>
+
+</div>
+
+<script>
+
+/* ================= GLOBAL ================= */
+
+let globalData = {
+body: null,
+risk: null
+};
+
+/* ================= UI ================= */
+
+document.querySelectorAll(".input").forEach(i=>{
+i.classList.add("w-full","p-2","border","rounded-xl","mb-2");
+});
+
+function showTab(n){
+["tab1","tab2","tab3"].forEach(t=>{
+document.getElementById(t).classList.add("hidden");
+});
+document.getElementById("tab"+n).classList.remove("hidden");
+if(n===3) generateSummary();
+}
+
+/* ================= BODY ================= */
+
+function analyzeBody(){
+
+let w=+weightInput.value;
+let h=+heightInput.value;
+let a=+ageInput.value;
+let bf=+bodyfatInput.value;
+let m=+muscleInput.value;
+let g=genderInput.value;
+let act=+activityLevel.value;
+
+if(!w||!h||!a||!bf||!m){
+alert("กรอกข้อมูลให้ครบครับ");
+return;
+}
+
+let H=h/100;
+
+/* ช่วงน้ำหนัก BMI 18.5-22.9 */
+let weightMin=18.5*H*H;
+let weightMax=22.9*H*H;
+
+/* ไขมัน */
+let fatPercentMin=(g==="male")?10:18;
+let fatPercentMax=(g==="male")?20:28;
+
+let fatKgMin=weightMin*(fatPercentMin/100);
+let fatKgMax=weightMax*(fatPercentMax/100);
+
+let currentFat=w*(bf/100);
+
+/* กล้าม */
+let stdWeight=(g==="male")?H*H*22:H*H*21;
+let muscleMin=(g==="male")?stdWeight*0.42:stdWeight*0.35;
+let muscleMax=(g==="male")?stdWeight*0.48:stdWeight*0.40;
+
+/* สรุป */
+let fatAdvice = currentFat>fatKgMax
+? "ควรลดไขมันประมาณ "+(currentFat-fatKgMax).toFixed(1)+" กก."
+: "ไขมันอยู่ในช่วงมาตรฐาน";
+
+let muscleAdvice = m<muscleMin
+? "ควรเพิ่มกล้ามเนื้ออย่างน้อย "+(muscleMin-m).toFixed(1)+" กก."
+: "กล้ามเนื้ออยู่ในช่วงมาตรฐาน";
+
+let BMR=(g==="male")
+? (10*w+6.25*h-5*a+5)
+: (10*w+6.25*h-5*a-161);
+
+let TDEE=BMR*act;
+
+globalData.body={
+fatAdvice,muscleAdvice,BMR,TDEE
+};
+
+bodyResult.innerHTML=`
+<h3 class="font-bold">ช่วงมาตรฐาน</h3>
+น้ำหนัก: ${weightMin.toFixed(1)} - ${weightMax.toFixed(1)} kg<br>
+ไขมัน (%): ${fatPercentMin} - ${fatPercentMax}%<br>
+ไขมัน (kg): ${fatKgMin.toFixed(1)} - ${fatKgMax.toFixed(1)} kg<br>
+กล้ามเนื้อ: ${muscleMin.toFixed(1)} - ${muscleMax.toFixed(1)} kg<br><br>
+
+<h3 class="font-bold">การประเมิน</h3>
+${fatAdvice}<br>
+${muscleAdvice}<br><br>
+
+BMR: ${BMR.toFixed(0)} kcal<br>
+TDEE: ${TDEE.toFixed(0)} kcal
+`;
+}
+
+/* ================= RISK (LOCKED STRUCTURE) ================= */
+
+const riskData = [
+{
+title:"Nutrition",
+questions:[
+"คุณสามารถหลีกเลี่ยงอาหารแปรรูป ข้าวขาว ผลไม้รสหวาน ได้เพียงใด?",
+"คุณจัดจานอาหาร 2:1:1 ได้เพียงใด?",
+"คุณได้รับโปรตีนเพียงพอทุกวันได้เพียงใด?"
+]
+},
+{
+title:"Activity",
+questions:[
+"คุณออกกำลังกาย ≥150 นาที/สัปดาห์ ได้เพียงใด?",
+"คุณทำเวท ≥2 ครั้ง/สัปดาห์ ได้เพียงใด?",
+"คุณลุกขยับทุก 1 ชั่วโมงได้เพียงใด?"
+]
+},
+{
+title:"Sleep",
+questions:[
+"คุณนอน 7–9 ชั่วโมงได้เพียงใด?",
+"คุณตื่นแล้วสดชื่นได้เพียงใด?",
+"คุณเข้านอนตรงเวลาได้เพียงใด?"
+]
+},
+{
+title:"Stress",
+questions:[
+"คุณจัดการความเครียดได้เพียงใด?",
+"คุณหลีกเลี่ยง Emotional Eating ได้เพียงใด?",
+"คุณผ่อนคลายจิตใจทุกวันได้เพียงใด?"
+]
+},
+{
+title:"Mindset",
+questions:[
+"คุณโฟกัสองค์ประกอบร่างกายมากกว่าน้ำหนักได้เพียงใด?",
+"คุณเชื่อในแนวทางระยะยาวได้เพียงใด?",
+"คุณกลับเข้าสู่แผนได้ทันทีเมื่อหลุดได้เพียงใด?"
+]
+},
+{
+title:"Water",
+questions:[
+"คุณดื่มน้ำ ≥1.5 ลิตร/วัน ได้เพียงใด?",
+"คุณจำกัดเครื่องดื่มหวานได้เพียงใด?",
+"คุณพกแก้วน้ำหรือขวดน้ำติดตัวระหว่างวันได้เพียงใด?"
+]
+},
+{
+title:"Microbiome",
+questions:[
+"คุณทานผักครบ 5 สี ได้เพียงใด?",
+"คุณขับถ่ายปกติได้เพียงใด?",
+"คุณกินโพรไบโอติคส์ หรือ อาหารที่มีโพรไบโอติคส์ได้เพียงใด?"
+]
+}
+];
+
+function initRisk(){
+let html="";
+riskData.forEach((factor,i)=>{
+html+=`<div class="mt-4">
+<h3 class="font-bold mb-2">${factor.title}</h3>`;
+factor.questions.forEach((q,j)=>{
+html+=`
+<label class="block mb-1">${j+1}. ${q}</label>
+<select class="risk input" data-factor="${i}">
+<option value="0">นานๆ ครั้ง</option>
+<option value="1">บ่อยเป็นบางช่วง</option>
+<option value="2">สม่ำเสมอเกือบทุกวัน</option>
+</select>`;
+});
+html+="</div>";
+});
+riskContainer.innerHTML=html;
+}
+
+window.onload=initRisk;
+
+function calculateRisk(){
+let scores=new Array(riskData.length).fill(0);
+document.querySelectorAll(".risk").forEach(s=>{
+scores[s.dataset.factor]+=+s.value;
+});
+globalData.risk=scores;
+riskResult.innerHTML="ประเมินเรียบร้อยแล้ว";
+}
+
+/* ================= SUMMARY ================= */
+
+let radarChart=null;
+
+function generateSummary(){
+
+if(!globalData.body||!globalData.risk){
+summarySection.innerHTML="กรุณาประเมินให้ครบก่อน";
+return;
+}
+
+let avg=(globalData.risk.reduce((a,b)=>a+b,0)/riskData.length).toFixed(1);
+
+summarySection.innerHTML=`
+<h3 class="font-bold">สรุปร่างกาย</h3>
+${globalData.body.fatAdvice}<br>
+${globalData.body.muscleAdvice}<br><br>
+
+BMR: ${globalData.body.BMR.toFixed(0)} kcal<br>
+TDEE: ${globalData.body.TDEE.toFixed(0)} kcal<br><br>
+
+คะแนนเฉลี่ยพฤติกรรม: ${avg}/6
+`;
+
+if(radarChart) radarChart.destroy();
+
+radarChart=new Chart(document.getElementById('radarChart'),{
+type:'radar',
+data:{
+labels:riskData.map(r=>r.title),
+datasets:[{
+label:'Risk Score',
+data:globalData.risk
+}]
+}
+});
+}
+
+</script>
+
+</body>
+</html>
