@@ -42,7 +42,7 @@ Coaching Dashboard
 <input id="ageInput" type="number" placeholder="อายุ" class="input">
 <input id="bodyfatInput" type="number" placeholder="%ไขมัน" class="input">
 <input id="muscleInput" type="number" placeholder="มวลกล้ามเนื้อ (kg)" class="input">
-<input id="muscleInput" type="number" placeholder="ไขมันช่องท้อง" class="input">
+<input id="VFatInput" type="number" placeholder="ไขมันช่องท้อง" class="input">
 
 <select id="genderInput" class="input">
 <option value="">เลือกเพศ</option>
@@ -133,6 +133,7 @@ let h=parseFloat(heightInput.value);
 let a=parseInt(ageInput.value);
 let bf=parseFloat(bodyfatInput.value);
 let m=parseFloat(muscleInput.value);
+let vf=parseFloat(VFatInput.value);
 let g=genderInput.value;
 
 if(!isValidNumber(w,30,250)) return alert("น้ำหนักไม่ถูกต้อง (30-250 kg)");
@@ -140,6 +141,7 @@ if(!isValidNumber(h,120,220)) return alert("ส่วนสูงไม่ถู
 if(!isValidNumber(a,10,100)) return alert("อายุไม่ถูกต้อง (10-100 ปี)");
 if(!isValidNumber(bf,3,60)) return alert("%ไขมันไม่ถูกต้อง (3-60%)");
 if(!isValidNumber(m,5,80)) return alert("มวลกล้ามเนื้อไม่ถูกต้อง");
+if(!isValidNumber(vf,5,80)) return alert("ไขมันช่องท้องไม่ถูกต้อง");
 if(!g) return alert("กรุณาเลือกเพศ");
 
 let H=h/100;
@@ -234,7 +236,7 @@ questions:[
 title:"Microbiome (ลำไส้)",
 description:"ประสิทธิภาพการดูดซึม",
 questions:[
-"คุณรับประทานผักและผลไม้หลากสีใหเได้ใยอาหารเพียงพอ ได้มากน้อยเพียงใด?",
+"คุณรับประทานผักและผลไม้หลากสีให้ได้ใยอาหารเพียงพอ ได้มากน้อยเพียงใด?",
 "คุณมีระบบขับถ่ายสม่ำเสมอ ไม่มีอาการท้องอืดหรือแน่นท้อง ได้มากน้อยเพียงใด?",
 "คุณดูแลสมดุลจุลินทรีย์ลำไส้ เช่น กินอาหารหมักดอง หรือ โพรไบโอติกส์ ได้มากน้อยเพียงใด?"
 ]
@@ -308,7 +310,8 @@ summarySection.innerHTML=
 อายุ: ${d.a} ปี<br>
 เพศ: ${d.g==="male"?"ชาย":"หญิง"}<br>
 %ไขมัน: ${d.bf}%<br>
-มวลกล้ามเนื้อ: ${d.m} kg<br><br>
+มวลกล้ามเนื้อ: ${d.m} kg<br>
+ไขมันช่องท้อง: ${d.vf} <br><br>
 
 <h3 class="font-bold">ค่ามาตรฐาน</h3>
 ช่วงน้ำหนักที่เหมาะสม: ${d.weightMin.toFixed(1)} - ${d.weightMax.toFixed(1)} kg<br>
