@@ -14,7 +14,7 @@ Update:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Coaching Dashboard v1.1.0</title>
+<title>MBC Health Check v1.1.0</title>
 <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
@@ -27,9 +27,9 @@ Coaching Dashboard
 </h1>
 
 <div class="flex justify-center space-x-4 mb-8">
-<button onclick="showTab(1)" class="tab-btn">Body</button>
-<button onclick="showTab(2)" class="tab-btn">Risk</button>
-<button onclick="showTab(3)" class="tab-btn">Summary</button>
+<button onclick="showTab(1)" class="tab-btn">ค่าร่างกาย</button>
+<button onclick="showTab(2)" class="tab-btn">ปัจจัย</button>
+<button onclick="showTab(3)" class="tab-btn">สรุป</button>
 </div>
 
 <!-- ================= BODY ================= -->
@@ -165,7 +165,7 @@ let muscleAdvice=m<muscleMin
 : "กล้ามเนื้ออยู่ในช่วงมาตรฐาน";
 
 globalData.body={
-w,h,a,bf,m,g,
+w,h,a,bf,m,g,vf,
 weightMin,weightMax,
 muscleMin,muscleMax,
 fatAdvice,muscleAdvice
