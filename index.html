@@ -16,6 +16,7 @@ Update:
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>MBC Health Check v1.1.0</title>
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 
 <body class="bg-gradient-to-br from-emerald-50 to-green-100 min-h-screen p-6">
@@ -71,7 +72,14 @@ Coaching Dashboard
 <!-- ================= SUMMARY ================= -->
 
 <div id="tab3" class="hidden">
-<div id="summarySection" class="mt-4 p-4 bg-emerald-50 rounded-xl text-sm"></div>
+
+<button onclick="saveImage()" 
+class="bg-blue-600 text-white px-4 py-2 rounded-xl mb-3">
+บันทึกเป็นรูปภาพ
+</button>
+
+<div id="summarySection"></div>
+
 </div>
 
 </div>
@@ -326,7 +334,19 @@ ${factorList}
 </div>
 `;
 }
+function saveImage(){
 
+html2canvas(document.getElementById("summarySection"))
+.then(canvas=>{
+
+let link=document.createElement("a");
+link.download="health-report.png";
+link.href=canvas.toDataURL();
+link.click();
+
+});
+
+}
 </script>
 
 </body>
