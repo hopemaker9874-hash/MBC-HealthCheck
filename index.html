@@ -334,10 +334,7 @@ ${factorList}
 </div>
 `;
 }
-<button onclick="saveToSheet()" 
-class="bg-blue-600 text-white px-4 py-2 rounded-xl mt-3">
-บันทึกข้อมูลลูกค้า
-</button>
+
 function saveImage(){
 
 html2canvas(document.getElementById("summarySection"))
@@ -350,36 +347,6 @@ link.click();
 
 });
 
-}
-
-async function saveToSheet(){
-
-let data = {
-
-name: clientNameInput.value,
-weight: weightInput.value,
-height: heightInput.value,
-age: ageInput.value,
-gender: genderInput.value,
-bodyfat: bodyfatInput.value,
-muscle: muscleInput.value,
-
-nutrition: globalData.risk[0],
-activity: globalData.risk[1],
-sleep: globalData.risk[2],
-stress: globalData.risk[3],
-mindset: globalData.risk[4],
-water: globalData.risk[5],
-microbiome: globalData.risk[6]
-
-};
-
-await fetch("https://script.google.com/macros/s/AKfycbxbIP0GVV2revM_RItBqd1SQ-dqPwUVv8MgpnEoQjItF1MfQIpVTv7JbYgTMqYuJoatwg/exec",{
-
-method:"POST",
-body: JSON.stringify(data)
-
-});
 
 alert("บันทึกข้อมูลลูกค้าแล้ว");
 
