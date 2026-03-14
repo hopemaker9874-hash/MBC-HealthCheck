@@ -413,37 +413,80 @@ let dateString=new Date().toLocaleDateString("th-TH");
 let factorList="";
 
 globalData.risk.forEach((score,i)=>{
-factorList+=`${riskData[i].title}: ${score}/6<br>`;
+factorList+=`
+<div class="flex justify-between border-b py-1">
+<span>${riskData[i].title}</span>
+<span class="font-bold">${score}/6</span>
+</div>`;
 });
 
 summarySection.innerHTML=
 `
-<div class="bg-white p-5 rounded-xl shadow">
+<div class="bg-white p-4 rounded-2xl shadow text-sm leading-relaxed">
 
-<h2 class="text-lg font-bold mb-3">รายงานผลการประเมินสุขภาพ</h2>
+<div class="text-center mb-3">
+<h2 class="text-lg font-bold text-emerald-700">
+รายงานสุขภาพ
+</h2>
+${name}<br>
+${dateString}
+</div>
 
-ชื่อ: ${name}<br>
-วันที่: ${dateString}<br><br>
+<div class="grid grid-cols-2 gap-2 mb-3">
 
-<h3 class="font-bold">ข้อมูลองค์ประกอบร่างกาย</h3>
-น้ำหนัก: ${d.w} kg<br>
-ส่วนสูง: ${d.h} cm<br>
-อายุ: ${d.a} ปี<br>
-เพศ: ${d.g==="male"?"ชาย":"หญิง"}<br>
-%ไขมัน: ${d.bf}%<br>
-มวลกล้ามเนื้อ: ${d.m} kg<br>
-ไขมันช่องท้อง: ${d.vf}<br><br>
+<div class="bg-gray-50 p-2 rounded">
+น้ำหนัก<br>
+<b>${d.w} kg</b>
+</div>
 
-<h3 class="font-bold">ค่ามาตรฐาน</h3>
-ช่วงน้ำหนัก: ${d.weightMin.toFixed(1)} - ${d.weightMax.toFixed(1)} kg<br>
-ช่วงมวลกล้ามเนื้อ: ${d.muscleMin.toFixed(1)} - ${d.muscleMax.toFixed(1)} kg<br><br>
+<div class="bg-gray-50 p-2 rounded">
+ไขมัน<br>
+<b>${d.bf}%</b>
+</div>
 
-<h3 class="font-bold">สรุปผล</h3>
+<div class="bg-gray-50 p-2 rounded">
+กล้ามเนื้อ<br>
+<b>${d.m} kg</b>
+</div>
+
+<div class="bg-gray-50 p-2 rounded">
+ไขมันช่องท้อง<br>
+<b>${d.vf}</b>
+</div>
+
+</div>
+
+<div class="mb-3">
+
+<h3 class="font-bold text-emerald-700">
+ค่ามาตรฐาน
+</h3>
+
+น้ำหนัก: ${d.weightMin.toFixed(1)} - ${d.weightMax.toFixed(1)} kg<br>
+กล้ามเนื้อ: ${d.muscleMin.toFixed(1)} - ${d.muscleMax.toFixed(1)} kg
+
+</div>
+
+<div class="mb-3">
+
+<h3 class="font-bold text-emerald-700">
+สรุปการประเมิน
+</h3>
+
 ${d.fatAdvice}<br>
-${d.muscleAdvice}<br><br>
+${d.muscleAdvice}
 
-<h3 class="font-bold">คะแนนปัจจัยสุขภาพ</h3>
+</div>
+
+<div>
+
+<h3 class="font-bold text-emerald-700">
+คะแนนปัจจัยสุขภาพ
+</h3>
+
 ${factorList}
+
+</div>
 
 </div>
 `;
