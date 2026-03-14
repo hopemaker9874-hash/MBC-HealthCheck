@@ -1,12 +1,12 @@
 <!DOCTYPE html>
 <!--
 ====================================================
-Coaching Dashboard
-Version: 1.1.0
+MBC Health Check
+Version: 1.2.0
 Update:
-- Long-form professional risk questions
+- Professional risk answer options
 - Clean production validation
-- Full body composition summary
+- Stable architecture
 ====================================================
 -->
 
@@ -14,9 +14,11 @@ Update:
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MBC Health Check v1.1.0</title>
+<title>MBC Health Check v1.2.0</title>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 </head>
 
 <body class="bg-gradient-to-br from-emerald-50 to-green-100 min-h-screen p-6">
@@ -63,10 +65,13 @@ Coaching Dashboard
 
 <div id="tab2" class="hidden">
 <div id="riskContainer"></div>
+
 <button onclick="calculateRisk()" class="secondary-btn">
 ประเมินผล
 </button>
+
 <div id="riskResult" class="mt-4 text-green-700 text-sm"></div>
+
 </div>
 
 <!-- ================= SUMMARY ================= -->
@@ -87,14 +92,14 @@ class="bg-blue-600 text-white px-4 py-2 rounded-xl mb-3">
 <script>
 
 /* =====================================================
-   GLOBAL STATE
+GLOBAL STATE
 ===================================================== */
 
-const APP_VERSION="1.1.0";
+const APP_VERSION="1.2.0";
 let globalData={body:null,risk:null};
 
 /* =====================================================
-   UI STYLING
+UI STYLE
 ===================================================== */
 
 document.querySelectorAll(".input").forEach(i=>{
@@ -113,25 +118,36 @@ document.querySelectorAll(".secondary-btn").forEach(btn=>{
 btn.classList.add("bg-orange-500","text-white","w-full","py-2","rounded-xl","mt-4");
 });
 
+/* =====================================================
+TAB NAVIGATION
+===================================================== */
+
 function showTab(n){
+
 ["tab1","tab2","tab3"].forEach(t=>{
 document.getElementById(t).classList.add("hidden");
 });
+
 document.getElementById("tab"+n).classList.remove("hidden");
+
 if(n===3) generateSummary();
+
 }
 
 /* =====================================================
-   VALIDATION
+VALIDATION
 ===================================================== */
 
 function isValidNumber(v,min,max){
+
 if(v===""||isNaN(v)||v<min||v>max) return false;
+
 return true;
+
 }
 
 /* =====================================================
-   BODY ANALYSIS
+BODY ANALYSIS
 ===================================================== */
 
 function analyzeBody(){
@@ -144,23 +160,26 @@ let m=parseFloat(muscleInput.value);
 let vf=parseFloat(VFatInput.value);
 let g=genderInput.value;
 
-if(!isValidNumber(w,30,250)) return alert("น้ำหนักไม่ถูกต้อง (30-250 kg)");
-if(!isValidNumber(h,120,220)) return alert("ส่วนสูงไม่ถูกต้อง (120-220 cm)");
-if(!isValidNumber(a,10,100)) return alert("อายุไม่ถูกต้อง (10-100 ปี)");
-if(!isValidNumber(bf,3,60)) return alert("%ไขมันไม่ถูกต้อง (3-60%)");
+if(!isValidNumber(w,30,250)) return alert("น้ำหนักไม่ถูกต้อง");
+if(!isValidNumber(h,120,220)) return alert("ส่วนสูงไม่ถูกต้อง");
+if(!isValidNumber(a,10,100)) return alert("อายุไม่ถูกต้อง");
+if(!isValidNumber(bf,3,60)) return alert("%ไขมันไม่ถูกต้อง");
 if(!isValidNumber(m,5,80)) return alert("มวลกล้ามเนื้อไม่ถูกต้อง");
 if(!isValidNumber(vf,0,80)) return alert("ไขมันช่องท้องไม่ถูกต้อง");
 if(!g) return alert("กรุณาเลือกเพศ");
 
 let H=h/100;
+
 let weightMin=18.5*H*H;
 let weightMax=22.9*H*H;
 
 let stdWeight=(g==="male")?H*H*22:H*H*21;
+
 let muscleMin=(g==="male")?stdWeight*0.42:stdWeight*0.35;
 let muscleMax=(g==="male")?stdWeight*0.48:stdWeight*0.40;
 
 let fatPercentMax=(g==="male")?20:28;
+
 let fatKgMax=w*(fatPercentMax/100);
 let currentFat=w*(bf/100);
 
@@ -172,119 +191,212 @@ let muscleAdvice=m<muscleMin
 ? "ควรเพิ่มกล้ามเนื้ออย่างน้อย "+(muscleMin-m).toFixed(1)+" กก."
 : "กล้ามเนื้ออยู่ในช่วงมาตรฐาน";
 
-globalData.body={
-w,h,a,bf,m,g,vf,
-weightMin,weightMax,
-muscleMin,muscleMax,
-fatAdvice,muscleAdvice
-};
+globalData.body={w,h,a,bf,m,g,vf,weightMin,weightMax,muscleMin,muscleMax,fatAdvice,muscleAdvice};
 
-bodyResult.innerHTML="✅ บันทึกข้อมูลเรียบร้อยแล้ว";
+bodyResult.innerHTML="✅ บันทึกข้อมูลเรียบร้อย";
+
 }
 
 /* =====================================================
-   LONG FORM RISK SECTION
+RISK QUESTIONS
 ===================================================== */
 
-const riskData=[{
-title:"Nutrition (โภชนาการ)",
-description:"วิเคราะห์เพื่อควบคุมระดับน้ำตาลและลดการสะสมไขมัน",
+const riskData=[
+
+{
+title:"Nutrition",
+description:"พฤติกรรมการกิน",
 questions:[
-"ในหนึ่งสัปดาห์ที่ผ่านมา คุณสามารถหลีกเลี่ยงอาหารที่มีค่าดัชนีน้ำตาลสูง เช่น ข้าวขาว ขนมปังขาว น้ำหวาน หรือเบเกอรี่ ได้มากน้อยเพียงใด?",
-"คุณสามารถจัดสัดส่วนจานอาหารตามหลัก 2:1:1 (ผัก 2 : ข้าว 1 : โปรตีน 1) ได้อย่างสม่ำเสมอเพียงใด?",
-"คุณมั่นใจว่าคุณได้รับโปรตีนคุณภาพดีเพียงพอ เพื่อรักษาหรือเพิ่มมวลกล้ามเนื้อ ได้มากน้อยเพียงใด?"
-]
+{
+text:"คุณสามารถหลีกเลี่ยงอาหารแปรรูป ข้าวขาว น้ำหวาน หรือเบเกอรี่ ได้มากน้อยเพียงใด?",
+options:["ทานเป็นประจำ","พยายามหลีกเลี่ยง","หลีกเลี่ยงได้เกือบทั้งหมด"]
 },
 {
-title:"Activity (กิจกรรม)",
-description:"วิเคราะห์เพื่อเพิ่ม BMR และลดโอกาสโยโย่",
-questions:[
-"คุณสามารถออกกำลังกายแบบคาร์ดิโออย่างน้อย 150 นาทีต่อสัปดาห์ ได้มากน้อยเพียงใด?",
-"คุณสามารถทำเวทเทรนนิ่งอย่างน้อย 2 ครั้งต่อสัปดาห์ ได้มากน้อยเพียงใด?",
-"ในวันทำงาน คุณสามารถลุกขยับร่างกายทุก 1 ชั่วโมง ได้มากน้อยเพียงใด?"
-]
+text:"คุณสามารถจัดสัดส่วนอาหาร 2:1:1 ได้มากน้อยเพียงใด?",
+options:["ไม่ค่อยได้ทำ","ทำบางมื้อ","ทำได้เกือบทุกมื้อ"]
 },
 {
-title:"Sleep (การนอน)",
-description:"วิเคราะห์เพื่อรีเซ็ตฮอร์โมนความหิว",
-questions:[
-"คุณสามารถนอนหลับต่อเนื่อง 7–9 ชั่วโมงต่อคืน ได้มากน้อยเพียงใด?",
-"คุณตื่นแล้วรู้สึกสดชื่นพร้อมเริ่มต้นวันใหม่ ได้มากน้อยเพียงใด?",
-"คุณสามารถเข้านอนและตื่นนอนตรงเวลาอย่างสม่ำเสมอ ได้มากน้อยเพียงใด?"
+text:"คุณได้รับโปรตีนเพียงพอทุกวันหรือไม่?",
+options:["ไม่เพียงพอ","บางวัน","เพียงพอสม่ำเสมอ"]
+}
 ]
 },
+
 {
-title:"Stress (ความเครียด)",
-description:"วิเคราะห์เพื่อควบคุมคอร์ติซอล",
+title:"Activity",
+description:"การออกกำลังกาย",
 questions:[
-"คุณสามารถจัดการความเครียดจากงานหรือชีวิตส่วนตัว ได้มากน้อยเพียงใด?",
-"เมื่อเครียด คุณสามารถหลีกเลี่ยงการกินตามอารมณ์ ได้มากน้อยเพียงใด?",
-"คุณสามารถจัดสรรเวลาผ่อนคลายจิตใจทุกวัน เช่น นั่งสมาธิ 10-15 นาที ฟังเพลง ได้มากน้อยเพียงใด?"
-]
+{
+text:"คุณออกกำลังกายคาร์ดิโอ 150 นาทีต่อสัปดาห์ได้หรือไม่?",
+options:["แทบไม่ได้ออก","ออกบ้าง","เกิน 150 นาที"]
 },
 {
-title:"Mindset (ทัศนคติ)",
-description:"วิเคราะห์ความยั่งยืน",
-questions:[
-"คุณให้ความสำคัญกับองค์ประกอบร่างกายมากกว่าน้ำหนัก ได้มากน้อยเพียงใด?",
-"คุณเชื่อว่าการปรับไลฟ์สไตล์สำคัญกว่าการอดอาหาร ได้มากน้อยเพียงใด?",
-"เมื่อหลุดแผน คุณสามารถกลับเข้าสู่แผนได้ทันที ได้มากน้อยเพียงใด?"
-]
+text:"คุณทำเวทเทรนนิ่งอย่างน้อย 2 ครั้งต่อสัปดาห์หรือไม่?",
+options:["ไม่เคย","ทำบ้าง","ทำสม่ำเสมอ"]
 },
 {
-title:"Water (การดื่มน้ำ)",
-description:"สนับสนุนระบบเผาผลาญ",
-questions:[
-"คุณดื่มน้ำอย่างน้อย 1.5–2 ลิตรต่อวัน ได้มากน้อยเพียงใด?",
-"คุณสามารถจำกัดเครื่องดื่มหวาน หรือ แอลกอฮอล์ ได้มากน้อยเพียงใด?",
-"คุณพกขวดน้ำติดตัวระหว่างวัน ได้มากน้อยเพียงใด?"
+text:"คุณลุกเดินหรือขยับตัวทุก 1 ชั่วโมงหรือไม่?",
+options:["นั่งยาวทั้งวัน","ขยับบ้าง","ขยับทุกชั่วโมง"]
+}
 ]
 },
+
 {
-title:"Microbiome (ลำไส้)",
-description:"ประสิทธิภาพการดูดซึม",
+title:"Sleep",
+description:"คุณภาพการนอน",
 questions:[
-"คุณรับประทานผักและผลไม้หลากสีให้ได้ใยอาหารเพียงพอ ได้มากน้อยเพียงใด?",
-"คุณมีระบบขับถ่ายสม่ำเสมอ ไม่มีอาการท้องอืดหรือแน่นท้อง ได้มากน้อยเพียงใด?",
-"คุณดูแลสมดุลจุลินทรีย์ลำไส้ เช่น กินอาหารหมักดอง หรือ โพรไบโอติกส์ ได้มากน้อยเพียงใด?"
+{
+text:"คุณนอน 7-9 ชั่วโมงต่อคืนหรือไม่?",
+options:["น้อยกว่า 6 ชั่วโมง","ประมาณ 6-7 ชั่วโมง","7-9 ชั่วโมง"]
+},
+{
+text:"คุณตื่นแล้วสดชื่นหรือไม่?",
+options:["ยังเพลีย","ปกติ","สดชื่น"]
+},
+{
+text:"คุณนอนเวลาเดิมทุกวันหรือไม่?",
+options:["ไม่สม่ำเสมอ","พยายามทำ","สม่ำเสมอ"]
+}
+]
+},
+
+{
+title:"Stress",
+description:"การจัดการความเครียด",
+questions:[
+{
+text:"คุณสามารถจัดการความเครียดได้หรือไม่?",
+options:["เครียดบ่อย","เครียดบางครั้ง","จัดการได้ดี"]
+},
+{
+text:"คุณกินตามอารมณ์หรือไม่?",
+options:["บ่อย","บางครั้ง","ไม่ค่อย"]
+},
+{
+text:"คุณมีเวลาผ่อนคลายทุกวันหรือไม่?",
+options:["แทบไม่มี","มีบ้าง","มีทุกวัน"]
+}
+]
+},
+
+{
+title:"Mindset",
+description:"แนวคิดสุขภาพ",
+questions:[
+{
+text:"คุณสนใจองค์ประกอบร่างกายมากกว่าน้ำหนักหรือไม่?",
+options:["สนใจแต่น้ำหนัก","ดูทั้งสอง","เน้นองค์ประกอบ"]
+},
+{
+text:"คุณเชื่อในการปรับไลฟ์สไตล์ระยะยาวหรือไม่?",
+options:["ไม่ค่อยเชื่อ","เชื่อบางส่วน","เชื่อเต็มที่"]
+},
+{
+text:"เมื่อหลุดแผนคุณกลับมาได้หรือไม่?",
+options:["หลุดยาว","พยายามกลับ","กลับทันที"]
+}
+]
+},
+
+{
+title:"Water",
+description:"พฤติกรรมการดื่มน้ำ",
+questions:[
+{
+text:"คุณดื่มน้ำวันละ 1.5 ลิตรหรือไม่?",
+options:["น้อยกว่า 1 ลิตร","ประมาณ 1-1.5","มากกว่า 1.5"]
+},
+{
+text:"คุณจำกัดเครื่องดื่มหวานหรือไม่?",
+options:["ดื่มทุกวัน","ดื่มบ้าง","ไม่ดื่ม"]
+},
+{
+text:"คุณพกขวดน้ำหรือไม่?",
+options:["ไม่พก","พกบางวัน","พกทุกวัน"]
+}
+]
+},
+
+{
+title:"Microbiome",
+description:"สุขภาพลำไส้",
+questions:[
+{
+text:"คุณทานผักผลไม้หลากสีหรือไม่?",
+options:["น้อยมาก","บ้าง","ทุกวัน"]
+},
+{
+text:"คุณขับถ่ายสม่ำเสมอหรือไม่?",
+options:["ท้องผูก","บางครั้ง","ปกติ"]
+},
+{
+text:"คุณทานอาหารหมักดองหรือโปรไบโอติกส์หรือไม่?",
+options:["ไม่ทาน","บางครั้ง","สม่ำเสมอ"]
+}
 ]
 }
+
 ];
 
 function initRisk(){
+
 let html="";
+
 riskData.forEach((factor,i)=>{
+
 html+=`<div class="mt-6 p-4 bg-gray-50 rounded-xl">
+
 <h3 class="font-bold text-emerald-700 text-lg">${factor.title}</h3>
 <p class="text-sm text-gray-600 mb-3">${factor.description}</p>`;
+
 factor.questions.forEach((q,j)=>{
+
 html+=`
 <div class="mb-4">
-<label class="block mb-2 leading-relaxed">${j+1}. ${q}</label>
+<label class="block mb-2">${j+1}. ${q.text}</label>
+
 <select class="risk input" data-factor="${i}">
-<option value="0">นานๆ ครั้ง</option>
-<option value="1">บ่อยเป็นบางช่วง</option>
-<option value="2">สม่ำเสมอ</option>
+
+<option value="0">${q.options[0]}</option>
+<option value="1">${q.options[1]}</option>
+<option value="2">${q.options[2]}</option>
+
 </select>
+
 </div>`;
+
 });
+
 html+="</div>";
+
 });
+
 riskContainer.innerHTML=html;
+
 }
+
 window.onload=initRisk;
 
+/* =====================================================
+CALCULATE RISK
+===================================================== */
+
 function calculateRisk(){
+
 let scores=new Array(riskData.length).fill(0);
+
 document.querySelectorAll(".risk").forEach(s=>{
 scores[s.dataset.factor]+=parseInt(s.value);
 });
+
 globalData.risk=scores;
-riskResult.innerHTML="✅ บันทึกคะแนนเรียบร้อยแล้ว";
+
+riskResult.innerHTML="✅ บันทึกคะแนนเรียบร้อย";
+
 }
 
 /* =====================================================
-   SUMMARY
+SUMMARY
 ===================================================== */
 
 function generateSummary(){
@@ -299,6 +411,7 @@ let name=clientNameInput.value||"ไม่ระบุชื่อ";
 let dateString=new Date().toLocaleDateString("th-TH");
 
 let factorList="";
+
 globalData.risk.forEach((score,i)=>{
 factorList+=`${riskData[i].title}: ${score}/6<br>`;
 });
@@ -319,21 +432,27 @@ summarySection.innerHTML=
 เพศ: ${d.g==="male"?"ชาย":"หญิง"}<br>
 %ไขมัน: ${d.bf}%<br>
 มวลกล้ามเนื้อ: ${d.m} kg<br>
-ไขมันช่องท้อง: ${d.vf} <br><br>
+ไขมันช่องท้อง: ${d.vf}<br><br>
 
 <h3 class="font-bold">ค่ามาตรฐาน</h3>
-ช่วงน้ำหนักที่เหมาะสม: ${d.weightMin.toFixed(1)} - ${d.weightMax.toFixed(1)} kg<br>
-ช่วงมวลกล้ามเนื้อมาตรฐาน: ${d.muscleMin.toFixed(1)} - ${d.muscleMax.toFixed(1)} kg<br><br>
-<h3 class="font-bold">สรุปการประเมินร่างกาย</h3>
+ช่วงน้ำหนัก: ${d.weightMin.toFixed(1)} - ${d.weightMax.toFixed(1)} kg<br>
+ช่วงมวลกล้ามเนื้อ: ${d.muscleMin.toFixed(1)} - ${d.muscleMax.toFixed(1)} kg<br><br>
+
+<h3 class="font-bold">สรุปผล</h3>
 ${d.fatAdvice}<br>
 ${d.muscleAdvice}<br><br>
 
-<h3 class="font-bold">สรุปคะแนนปัจจัยสุขภาพ  7 ด้าน</h3>
+<h3 class="font-bold">คะแนนปัจจัยสุขภาพ</h3>
 ${factorList}
 
 </div>
 `;
+
 }
+
+/* =====================================================
+EXPORT IMAGE
+===================================================== */
 
 function saveImage(){
 
@@ -347,10 +466,8 @@ link.click();
 
 });
 
+}
 
-alert("บันทึกข้อมูลลูกค้าแล้ว");
-
-}   
 </script>
 
 </body>
