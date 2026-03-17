@@ -1,23 +1,45 @@
 <!DOCTYPE html>
-<!--
-====================================================
-MBC Health Check
-Version: 1.2.0
-Update:
-- Professional risk answer options
-- Clean production validation
-- Stable architecture
-====================================================
--->
-
 <html lang="th">
 <head>
+
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MBC Health Check v1.2.0</title>
+
+<title>MBC Health Check v1.3</title>
 
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+<style>
+
+.input{
+width:100%;
+padding:10px;
+border:1px solid #ddd;
+border-radius:10px;
+margin-bottom:10px;
+font-size:14px;
+}
+
+.primary-btn{
+background:#059669;
+color:white;
+padding:10px;
+border-radius:10px;
+width:100%;
+font-weight:600;
+}
+
+.secondary-btn{
+background:#f97316;
+color:white;
+padding:10px;
+border-radius:10px;
+width:100%;
+margin-top:10px;
+}
+
+</style>
 
 </head>
 
@@ -26,15 +48,806 @@ Update:
 <div class="max-w-5xl mx-auto bg-white rounded-3xl shadow-2xl p-8">
 
 <h1 class="text-3xl font-bold text-center text-emerald-700 mb-6">
-Coaching Dashboard
+MBC Health Check
 </h1>
 
 <div class="flex justify-center space-x-4 mb-8">
-<button onclick="showTab(1)" class="tab-btn">ค่าร่างกาย</button>
-<button onclick="showTab(2)" class="tab-btn">ปัจจัย</button>
-<button onclick="showTab(3)" class="tab-btn">สรุป</button>
+<button onclick="showTab(1)" id="tabBtn1" class="tab-btn bg-emerald-600 text-white">
+ค่าร่างกาย
+</button>
+
+<button onclick="showTab(2)" id="tabBtn2" class="tab-btn bg-orange-500 text-white">
+ปัจจัย
+</button>
+
+<button onclick="showTab(3)" id="tabBtn3" class="tab-btn bg-blue-600 text-white">
+สรุป
+</button>
 </div>
 
+<!-- ================= BODY ================= -->
+
+<div id="tab1">
+
+<input id="clientNameInput" type="text" placeholder="ชื่อผู้รับการประเมิน" class="input">
+
+<select id="scaleType" class="input">
+<option value="">เลือกเครื่องชั่ง</option>
+<option value="inbody">InBody</option>
+<option value="omron">Omron (% กล้ามเนื้อ)</option>
+</select>
+
+<input id="weightInput" type="number" placeholder="น้ำหนัก (kg)" class="input">
+<input id="heightInput" type="number" placeholder="ส่วนสูง (cm)" class="input">
+<input id="bodyfatInput" type="number" placeholder="%ไขมัน" class="input">
+<input id="muscleInput" type="number" placeholder="มวลกล้ามเนื้อ" class="input">
+<input id="VFatInput" type="number" placeholder="ไขมันช่องท้อง" class="input">
+
+<select id="genderInput" class="input">
+<option value="">เลือกเพศ</option>
+<option value="male">ชาย</option>
+<option value="female">หญิง</option>
+</select>
+
+<button onclick="analyzeBody()" class="primary-btn">
+วิเคราะห์องค์ประกอบร่างกาย
+</button>
+
+<div id="bodyResult" class="mt-4 text-sm"></div>
+
+</div>
+
+<!-- ================= RISK ================= -->
+
+<div id="tab2" class="hidden">
+
+<div id="riskContainer"></div>
+
+<button onclick="calculateRisk()" class="secondary-btn">
+ประเมินผล
+</button>
+
+<div id="riskResult" class="mt-3 text-green-700"></div>
+
+</div>
+
+<!-- ================= SUMMARY ================= -->
+
+<div id="tab3" class="hidden">
+
+<button onclick="saveImage()" 
+class="bg-blue-600 text-white px-4 py-2 rounded-xl mb-3">
+บันทึกเป็นรูปภาพ
+</button>
+
+<div id="summarySection"></div>
+
+</div>
+
+</div>
+
+<script>
+
+/* ================= GLOBAL ================= */
+
+let globalData={body:null,risk:null};
+
+/* ================= TAB ================= */
+
+function showTab(n){
+
+["tab1","tab2","tab3"].forEach(t=>{
+document.getElementById(t).classList.add("hidden");
+});
+
+document.getElementById("tab"+n).classList.remove("hidden");
+
+if(n===3) generateSummary();
+
+}
+
+/* ================= BODY ANALYSIS ================= */
+
+function analyzeBody(){
+
+let scale=scaleType.value;
+
+let w=parseFloat(weightInput.value);
+let h=parseFloat(heightInput.value);
+let bf=parseFloat(bodyfatInput.value);
+let m=parseFloat(muscleInput.value);
+let vf=parseFloat(VFatInput.value);
+let g=genderInput.value;
+
+if(scale==="omron"){
+m=w*(m/100);
+}
+
+let H=h/100;
+
+/* น้ำหนักมาตรฐาน */
+
+let weightMin=18.5*(H*H);
+let weightMax=22.9*(H*H);
+
+/* ไขมัน */
+
+let fatPercentMin=(g==="male")?10:18;
+let fatPercentMax=(g==="male")?20:28;
+
+let fatMass=w*(bf/100);
+
+let fatMinKg=w*(fatPercentMin/100);
+let fatMaxKg=w*(fatPercentMax/100);
+
+let fatToLose=Math.max(0,fatMass-fatMaxKg);
+
+/* กล้ามเนื้อ */
+
+let stdWeight=(g==="male")?H*H*22:H*H*21;
+
+let muscleMin=(g==="male")?stdWeight*0.42:stdWeight*0.35;
+let muscleMax=(g==="male")?stdWeight*0.48:stdWeight*0.40;
+
+let muscleToGain=Math.max(0,muscleMin-m);
+
+/* น้ำหนัก */
+
+let weightChange=0;
+
+if(w>weightMax) weightChange=w-weightMax;
+if(w<weightMin) weightChange=weightMin-w;
+
+/* visceral fat */
+
+let vfAdvice="";
+
+if(vf<=4) vfAdvice="ระดับดี";
+else if(vf<=9) vfAdvice="เริ่มสูง ควรเพิ่มกิจกรรม";
+else vfAdvice="สูง ควรควบคุมอาหาร";
+
+/* save */
+
+globalData.body={
+
+w:w,
+bf:bf,
+m:m,
+vf:vf,
+
+weightMin:weightMin,
+weightMax:weightMax,
+
+fatPercentMin:fatPercentMin,
+fatPercentMax:fatPercentMax,
+
+muscleMin:muscleMin,
+muscleMax:muscleMax,
+
+fatToLose:fatToLose,
+muscleToGain:muscleToGain,
+weightChange:weightChange
+
+};
+/* display */
+
+bodyResult.innerHTML=
+
+`
+<div class="bg-green-50 p-4 rounded-xl">
+
+<b>น้ำหนัก</b><br>
+${w} kg (เป้าหมาย ${weightMin.toFixed(1)} - ${weightMax.toFixed(1)} kg)<br><br>
+
+<b>ไขมัน</b><br>
+${bf}% (${fatMass.toFixed(1)} kg)<br>
+เป้าหมาย ${fatPercentMin} - ${fatPercentMax}%<br><br>
+
+<b>กล้ามเนื้อ</b><br>
+${m.toFixed(1)} kg<br>
+เป้าหมาย ${muscleMin.toFixed(1)} - ${muscleMax.toFixed(1)} kg<br><br>
+
+<b>คำแนะนำ</b><br>
+
+ปรับน้ำหนัก ${weightChange.toFixed(1)} kg<br>
+ลดไขมัน ${fatToLose.toFixed(1)} kg<br>
+เพิ่มกล้ามเนื้อ ${muscleToGain.toFixed(1)} kg<br><br>
+
+<b>ไขมันช่องท้อง</b><br>
+ระดับ ${vf} : ${vfAdvice}
+
+</div>
+`;
+
+}
+
+/* ================= RISK QUESTIONS ================= */
+
+const riskData=[
+
+{
+title:"Nutrition",
+description:"พฤติกรรมการกิน",
+questions:[
+
+{
+text:"คุณทานอาหารแปรรูป เช่น ขนม เบเกอรี่ หรือเครื่องดื่มหวาน บ่อยแค่ไหน?",
+options:[
+{text:"ทานแทบทุกวัน",score:0},
+{text:"ทานสัปดาห์ละ 2-3 ครั้ง",score:1},
+{text:"แทบไม่ทาน",score:2}
+]
+},
+
+{
+text:"คุณสามารถจัดสัดส่วนจานอาหาร 2:1:1 (ผัก:คาร์บ:โปรตีน) ได้มากน้อยเพียงใด?",
+options:[
+{text:"แทบไม่เคยจัดตามสัดส่วน",score:0},
+{text:"ทำได้บางมื้อ",score:1},
+{text:"ทำได้เกือบทุกมื้อ",score:2}
+]
+},
+
+{
+text:"คุณได้รับโปรตีนคุณภาพเพียงพอในแต่ละวันหรือไม่?",
+options:[
+{text:"ไม่แน่ใจหรือทานน้อย",score:0},
+{text:"ทานบ้างบางวัน",score:1},
+{text:"ทานเพียงพอทุกวัน",score:2}
+]
+}
+
+]
+},
+
+{
+title:"Activity",
+description:"การเคลื่อนไหวร่างกาย",
+questions:[
+
+{
+text:"คุณออกกำลังกายแบบคาร์ดิโออย่างน้อย 150 นาทีต่อสัปดาห์หรือไม่?",
+options:[
+{text:"แทบไม่ได้ออกกำลังกาย",score:0},
+{text:"ออกกำลังกายบ้าง",score:1},
+{text:"ออกกำลังกายเกิน 150 นาที",score:2}
+]
+},
+
+{
+text:"คุณทำเวทเทรนนิ่งเพื่อเพิ่มมวลกล้ามเนื้อหรือไม่?",
+options:[
+{text:"ไม่เคยทำ",score:0},
+{text:"ทำบ้างบางครั้ง",score:1},
+{text:"ทำสม่ำเสมอทุกสัปดาห์",score:2}
+]
+},
+
+{
+text:"ในวันทำงานคุณลุกเดินหรือขยับตัวทุก 1 ชั่วโมงหรือไม่?",
+options:[
+{text:"นั่งทำงานยาวหลายชั่วโมง",score:0},
+{text:"ลุกเดินบ้าง",score:1},
+{text:"ลุกขยับตัวทุกชั่วโมง",score:2}
+]
+}
+
+]
+},
+
+{
+title:"Sleep",
+description:"คุณภาพการนอน",
+questions:[
+
+{
+text:"คุณนอนหลับเฉลี่ยกี่ชั่วโมงต่อคืน?",
+options:[
+{text:"น้อยกว่า 6 ชั่วโมง",score:0},
+{text:"ประมาณ 6-7 ชั่วโมง",score:1},
+{text:"7-9 ชั่วโมง",score:2}
+]
+},
+
+{
+text:"หลังตื่นนอนคุณรู้สึกสดชื่นหรือไม่?",
+options:[
+{text:"ยังรู้สึกเพลีย",score:0},
+{text:"พอใช้ได้",score:1},
+{text:"สดชื่นพร้อมเริ่มวัน",score:2}
+]
+},
+
+{
+text:"คุณเข้านอนเวลาเดิมสม่ำเสมอหรือไม่?",
+options:[
+{text:"ไม่สม่ำเสมอ",score:0},
+{text:"ค่อนข้างสม่ำเสมอ",score:1},
+{text:"สม่ำเสมอเกือบทุกวัน",score:2}
+]
+}
+
+]
+},
+
+{
+title:"Stress",
+description:"การจัดการความเครียด",
+questions:[
+
+{
+text:"คุณรู้สึกเครียดจากงานหรือชีวิตประจำวันบ่อยแค่ไหน?",
+options:[
+{text:"เครียดแทบทุกวัน",score:0},
+{text:"เครียดบางช่วง",score:1},
+{text:"จัดการความเครียดได้ดี",score:2}
+]
+},
+
+{
+text:"เมื่อเครียดคุณมีพฤติกรรมกินตามอารมณ์หรือไม่?",
+options:[
+{text:"เกิดขึ้นบ่อย",score:0},
+{text:"บางครั้ง",score:1},
+{text:"แทบไม่เกิดขึ้น",score:2}
+]
+},
+
+{
+text:"คุณมีเวลาผ่อนคลาย เช่น ฟังเพลง เดินเล่น หรือทำสมาธิหรือไม่?",
+options:[
+{text:"แทบไม่มีเวลา",score:0},
+{text:"ทำบ้างเป็นบางวัน",score:1},
+{text:"ทำเป็นประจำ",score:2}
+]
+}
+
+]
+},
+
+{
+title:"Mindset",
+description:"แนวคิดด้านสุขภาพ",
+questions:[
+
+{
+text:"คุณให้ความสำคัญกับอะไรระหว่างน้ำหนักกับองค์ประกอบร่างกาย?",
+options:[
+{text:"เน้นแต่น้ำหนัก",score:0},
+{text:"ดูทั้งสองอย่าง",score:1},
+{text:"เน้นไขมันและกล้ามเนื้อ",score:2}
+]
+},
+
+{
+text:"คุณเชื่อว่าการปรับไลฟ์สไตล์สำคัญต่อสุขภาพระยะยาวหรือไม่?",
+options:[
+{text:"ไม่ค่อยเชื่อ",score:0},
+{text:"เชื่อบางส่วน",score:1},
+{text:"เชื่ออย่างเต็มที่",score:2}
+]
+},
+
+{
+text:"เมื่อเผลอหลุดแผนสุขภาพ คุณสามารถกลับมาเริ่มใหม่ได้หรือไม่?",
+options:[
+{text:"มักหลุดยาว",score:0},
+{text:"พยายามกลับมา",score:1},
+{text:"กลับมาได้ทันที",score:2}
+]
+}
+
+]
+},
+
+{
+title:"Water",
+description:"พฤติกรรมการดื่มน้ำ",
+questions:[
+
+{
+text:"คุณดื่มน้ำสะอาดต่อวันประมาณเท่าไร?",
+options:[
+{text:"น้อยกว่า 1 ลิตร",score:0},
+{text:"ประมาณ 1-1.5 ลิตร",score:1},
+{text:"มากกว่า 1.5 ลิตร",score:2}
+]
+},
+
+{
+text:"คุณดื่มเครื่องดื่มหวานหรือไม่?",
+options:[
+{text:"ดื่มทุกวัน",score:0},
+{text:"ดื่มบางครั้ง",score:1},
+{text:"แทบไม่ดื่ม",score:2}
+]
+},
+
+{
+text:"คุณพกขวดน้ำติดตัวระหว่างวันหรือไม่?",
+options:[
+{text:"ไม่พก",score:0},
+{text:"พกบางวัน",score:1},
+{text:"พกทุกวัน",score:2}
+]
+}
+
+]
+},
+
+{
+title:"Microbiome",
+description:"สุขภาพลำไส้",
+questions:[
+
+{
+text:"คุณทานผักและผลไม้หลากสีหรือไม่?",
+options:[
+{text:"น้อยมาก",score:0},
+{text:"ทานบ้าง",score:1},
+{text:"ทานทุกวัน",score:2}
+]
+},
+
+{
+text:"ระบบขับถ่ายของคุณเป็นอย่างไร?",
+options:[
+{text:"ท้องผูกบ่อย",score:0},
+{text:"บางครั้ง",score:1},
+{text:"สม่ำเสมอทุกวัน",score:2}
+]
+},
+
+{
+text:"คุณทานอาหารหมักดองหรือโพรไบโอติกส์หรือไม่?",
+options:[
+{text:"ไม่ทานเลย",score:0},
+{text:"บางครั้ง",score:1},
+{text:"ทานสม่ำเสมอ",score:2}
+]
+}
+
+]
+}
+
+];
+   const riskAdvice = {
+
+Nutrition:"ควรลดอาหาร GI สูง เช่น ข้าวขาว น้ำหวาน เบเกอรี่ และเพิ่มโปรตีนคุณภาพ",
+
+Activity:"ควรเพิ่มกิจกรรมทางกายอย่างน้อย 150 นาทีต่อสัปดาห์ และเพิ่มเวทเทรนนิ่ง",
+
+Sleep:"ควรนอนให้ได้ 7–9 ชั่วโมงต่อคืน และเข้านอนเวลาเดิม",
+
+Stress:"ควรเพิ่มกิจกรรมผ่อนคลาย เช่น สมาธิ เดินเล่น หรือฟังเพลง",
+
+Mindset:"ควรเน้นสุขภาพระยะยาว ไม่เน้นลดน้ำหนักเร็ว",
+
+Water:"ควรดื่มน้ำอย่างน้อย 1.5–2 ลิตรต่อวัน",
+
+Microbiome:"ควรเพิ่มผักผลไม้หลากสี และอาหารที่มีใยอาหาร"
+
+};
+
+function initRisk(){
+
+let html="";
+
+riskData.forEach((factor,i)=>{
+
+html+=`<div class="mt-6 p-4 bg-gray-50 rounded-xl">
+
+<h3 class="font-bold text-emerald-700 text-lg">${factor.title}</h3>
+<p class="text-sm text-gray-600 mb-3">${factor.description}</p>`;
+
+factor.questions.forEach((q,j)=>{
+
+html+=`
+<div class="mb-4">
+
+<label class="block mb-2">${j+1}. ${q.text}</label>
+
+<select class="risk input" data-factor="${i}">
+`;
+
+q.options.forEach(opt=>{
+html+=`<option value="${opt.score}">${opt.text}</option>`;
+});
+
+html+=`</select>
+
+</div>`;
+
+});
+
+html+="</div>";
+
+});
+
+riskContainer.innerHTML=html;
+
+}
+
+window.onload=initRisk;
+
+/* ================= CALCULATE RISK ================= */
+
+function calculateRisk(){
+
+let scores=new Array(riskData.length).fill(0);
+
+document.querySelectorAll(".risk").forEach(s=>{
+scores[s.dataset.factor]+=parseInt(s.value);
+});
+
+/* เก็บคะแนน */
+
+globalData.risk=scores;
+
+/* เก็บคำแนะนำแต่ละปัจจัย */
+
+let riskSummary=[];
+
+let adviceHTML="";
+
+scores.forEach((score,index)=>{
+
+let title=riskData[index].title;
+
+let advice=riskAdvice[title];
+
+let status="ดี";
+
+if(score<=2) status="ควรปรับปรุง";
+else if(score<=4) status="ปานกลาง";
+
+/* save */
+
+riskSummary.push({
+title:title,
+score:score,
+advice:advice
+});
+
+/* display */
+
+adviceHTML+=`
+
+<div class="bg-white p-3 rounded-xl shadow mb-3">
+
+<b>${title}</b><br>
+
+คะแนน ${score}/6<br>
+
+สถานะ : ${status}<br>
+
+คำแนะนำ : ${advice}
+
+</div>
+
+`;
+
+});
+
+/* เก็บไว้ใช้ใน Tab 3 */
+
+globalData.riskSummary=riskSummary;
+
+riskResult.innerHTML=
+
+`
+<h3 class="font-bold text-emerald-700 mb-2">
+ผลประเมินพฤติกรรมสุขภาพ
+</h3>
+
+${adviceHTML}
+
+`;
+
+}
+/* ================= TOP RISK ================= */
+
+function getTopRiskAdvice(){
+
+let list=[...globalData.riskSummary];
+
+list.sort((a,b)=>a.score-b.score);
+
+let top=list.slice(0,3);
+
+let html="";
+
+top.forEach((item,i)=>{
+
+html+=`
+
+<div class="mb-3">
+
+<b>${i+1}. ${item.title}</b><br>
+
+${item.advice}
+
+</div>
+
+`;
+
+});
+
+return html;
+
+}
+
+/* ================= SUMMARY ================= */
+
+function generateSummary(){
+
+if(!globalData.body || !globalData.riskSummary){
+summarySection.innerHTML="กรุณาประเมินข้อมูลให้ครบก่อน";
+return;
+}
+
+let d = globalData.body;
+
+let name = clientNameInput.value || "ไม่ระบุชื่อ";
+
+let dateString = new Date().toLocaleDateString("th-TH");
+
+/* แปลชื่อปัจจัย */
+
+const factorThai = {
+Nutrition:"โภชนาการ",
+Activity:"กิจกรรมทางกาย",
+Sleep:"การนอน",
+Stress:"ความเครียด",
+Mindset:"ทัศนคติสุขภาพ",
+Water:"การดื่มน้ำ",
+Microbiome:"สุขภาพลำไส้"
+};
+
+/* คะแนนปัจจัย */
+
+let factorList="";
+
+globalData.riskSummary.forEach((item)=>{
+
+factorList+=`
+<div class="flex justify-between border-b py-1">
+<span>${factorThai[item.title]}</span>
+<span>${item.score}/6 คะแนน</span>
+</div>
+`;
+
+});
+
+/* เรียงปัจจัยที่ควรปรับ */
+
+let list=[...globalData.riskSummary];
+
+list.sort((a,b)=>a.score-b.score);
+
+let top=list.slice(0,3);
+
+let adviceHTML="";
+
+top.forEach((item,i)=>{
+
+adviceHTML+=`
+
+<div class="mb-3">
+
+<b>${i+1}. ${factorThai[item.title]}</b><br>
+
+${item.advice}
+
+</div>
+
+`;
+
+});
+
+/* แสดงผล */
+
+summarySection.innerHTML=
+
+`
+<div class="bg-white p-4 rounded-2xl shadow text-sm leading-relaxed">
+
+<div class="text-center mb-3">
+
+<h2 class="text-lg font-bold text-emerald-700">
+รายงานสรุปสุขภาพ
+</h2>
+
+${name}<br>
+
+วันที่ประเมิน : ${dateString}
+
+</div>
+
+<div class="grid grid-cols-2 gap-2 mb-3">
+
+<div class="bg-gray-50 p-2 rounded">
+น้ำหนัก<br>
+<b>${d.w} กก.</b>
+</div>
+
+<div class="bg-gray-50 p-2 rounded">
+ไขมันในร่างกาย<br>
+<b>${d.bf}%</b>
+</div>
+
+<div class="bg-gray-50 p-2 rounded">
+มวลกล้ามเนื้อ<br>
+<b>${d.m} กก.</b>
+</div>
+
+<div class="bg-gray-50 p-2 rounded">
+ไขมันช่องท้อง<br>
+<b>${d.vf}</b>
+</div>
+
+</div>
+
+<div class="mb-3">
+
+<h3 class="font-bold text-emerald-700">
+คำแนะนำการปรับองค์ประกอบร่างกาย
+</h3>
+
+ปรับน้ำหนัก ${d.weightChange.toFixed(1)} กก.<br>
+ลดไขมัน ${d.fatToLose.toFixed(1)} กก.<br>
+เพิ่มกล้ามเนื้อ ${d.muscleToGain.toFixed(1)} กก.
+
+</div>
+
+<div class="mb-3">
+
+<h3 class="font-bold text-emerald-700">
+คะแนนพฤติกรรมสุขภาพ
+</h3>
+
+${factorList}
+
+</div>
+
+<div>
+
+<h3 class="font-bold text-emerald-700">
+3 ปัจจัยที่ควรปรับก่อน
+</h3>
+
+${adviceHTML}
+
+</div>
+
+</div>
+`;
+
+}
+
+/* ================= EXPORT IMAGE ================= */
+
+function saveImage(){
+
+html2canvas(document.getElementById("summarySection"))
+.then(canvas=>{
+
+let link=document.createElement("a");
+
+link.download="health-report.png";
+
+link.href=canvas.toDataURL();
+
+link.click();
+
+});
+
+}
+
+</script>
+
+</body>
+</html>
 <!-- ================= BODY ================= -->
 
 <div id="tab1">
