@@ -77,7 +77,7 @@ MBC Health Check
 <input id="weightInput" type="number" placeholder="น้ำหนัก (kg)" class="input">
 <input id="heightInput" type="number" placeholder="ส่วนสูง (cm)" class="input">
 <input id="bodyfatInput" type="number" placeholder="%ไขมัน" class="input">
-<input id="muscleInput" type="number" placeholder="มวลกล้ามเนื้อ (kg)" class="input">
+<input id="muscleInput" type="number" placeholder="มวลกล้ามเนื้อ " class="input">
 <input id="VFatInput" type="number" placeholder="ไขมันช่องท้อง" class="input">
 
    <select id="genderInput" class="input">
@@ -354,7 +354,7 @@ ${goalAdvice ? `<div class="text-orange-600 mt-2">${goalAdvice}</div>` : ""}
 
 ${bf}% (${fatMass.toFixed(1)} kg)<br>
 ช่วงมาตรฐาน ${fatMinKg.toFixed(1)} - ${fatMaxKg.toFixed(1)} kg
-
+<br>
 <b>กล้ามเนื้อ</b><br>
 
 ${m.toFixed(1)} kg<br>
