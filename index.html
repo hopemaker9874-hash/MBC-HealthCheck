@@ -287,7 +287,7 @@ weightChange = weightMin-w
 
 }
 
-let fatToLose = Math.max(0,fatMass-fatMaxKg)
+let fatToLose = Math.max(0,fatMass-((fatMaxKg-fatMinKg)/2))
 
 let muscleToGain = Math.max(0,muscleMin-m)
 
@@ -367,8 +367,8 @@ ${m.toFixed(1)} kg<br>
 </h3>
 
 ปรับน้ำหนัก ${weightChange.toFixed(1)} kg<br>
-ลดไขมัน ${fatToLose.toFixed(1)} kg<br>
-เพิ่มกล้ามเนื้อ ${muscleToGain.toFixed(1)} kg
+ปรับไขมัน ${fatToLose.toFixed(1)} kg<br>
+ปรับกล้ามเนื้อ ${muscleToGain.toFixed(1)} kg
 
 </div>
 `
