@@ -304,6 +304,7 @@ w:w,
 bf:bf,
 m:m,
 vf:vf,
+g:g,
 
 bmi:bmi,
 
@@ -550,7 +551,8 @@ let d = globalData.body;
 
 let weight = d.w;
 let fatPercent = d.bf;
-let gender = d.g;
+let gender = d.g || "male";
+let goal = d.goal || "recomp";
 let bmi = d.bmi;
 
 /* ======================
@@ -574,21 +576,65 @@ let tdee = bmr * 1.4;
 /* ======================
 เป้าหมายลดไขมัน
 ====================== */
-
-let targetCalories = tdee * 0.8;
-
-/* ======================
-Protein
+   
+   /* ======================
+Calories ตาม goal
 ====================== */
 
-let protein = lbm * 2;
+let targetCalories = tdee * 0.9; // default recomposition
+
+if(goal === "fatloss"){
+  targetCalories = tdee * 0.75;
+}
+else if(goal === "weightloss"){
+  targetCalories = tdee * 0.8;
+}
+else if(goal === "muscle"){
+  targetCalories = tdee * 1.1;
+}
 
 /* ======================
-Fat
+เลือก LBM หรือ BW
 ====================== */
 
-let fat = (targetCalories * 0.25) / 9;
+let useLBM = false;
 
+if(fatPercent > 25 && gender==="male") useLBM = true;
+if(fatPercent > 35 && gender==="female") useLBM = true;
+if(goal === "fatloss") useLBM = true;
+
+let baseWeight = useLBM ? lbm : weight;
+
+/* FAT LOSS */
+if(goal === "fatloss"){
+  protein = baseWeight * 2.2;
+  fat = (targetCalories * 0.25)/9;
+}
+/* ======================
+Adjust สำหรับ BF สูง
+====================== */
+
+if(fatPercent > 30){
+  protein = protein * 1.1;   // เพิ่มโปรตีน 10%
+}
+   
+/* WEIGHT LOSS */
+else if(goal === "weightloss"){
+  protein = baseWeight * 2;
+  fat = (targetCalories * 0.25)/9;
+}
+
+/* MUSCLE */
+else if(goal === "muscle"){
+  protein = baseWeight * 1.7;
+  fat = (targetCalories * 0.25)/9;
+}
+
+/* RECOMP */
+else{
+  protein = baseWeight * 2;
+  fat = (targetCalories * 0.25)/9;
+}
 /* ======================
 Carb
 ====================== */
@@ -596,7 +642,10 @@ Carb
 let carbCalories = targetCalories - (protein*4) - (fat*9);
 
 let carb = carbCalories / 4;
-
+/* ลดคาร์บเพิ่ม */
+if(fatPercent > 30){
+  carb = carb * 0.8;   // ลดคาร์บ 20%
+}
 /* ======================
 แบ่ง carb
 ====================== */
